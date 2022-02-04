@@ -11,6 +11,11 @@ import discrete_BCQ
 import DQN
 import utils
 
+from os.path import dirname, abspath
+from sacred import Experiment
+from sacred.observers import FileStorageObserver
+from sacred.utils import apply_backspaces_and_linefeeds
+
 
 def interact_with_environment(env, replay_buffer, is_atari, num_actions, state_dim, device, args, parameters):
 	# For saving files
@@ -182,8 +187,30 @@ def eval_policy(policy, env_name, seed, eval_episodes=10):
 	return avg_reward
 
 
-if __name__ == "__main__":
 
+
+# Load parameters
+parser = argparse.ArgumentParser()
+parser.add_argument("--env", default="PongNoFrameskip-v0")     # OpenAI gym environment name
+parser.add_argument("--seed", default=0, type=int)             # Sets Gym, PyTorch and Numpy seeds
+parser.add_argument("--buffer_name", default="Default")        # Prepends name to filename
+parser.add_argument("--max_timesteps", default=1e6, type=int)  # Max time steps to run environment or train for
+parser.add_argument("--BCQ_threshold", default=0.3, type=float)# Threshold hyper-parameter for BCQ
+parser.add_argument("--low_noise_p", default=0.2, type=float)  # Probability of a low noise episode when generating buffer
+parser.add_argument("--rand_action_p", default=0.2, type=float)# Probability of taking a random action when generating buffer, during non-low noise episode
+parser.add_argument("--train_behavioral", action="store_true") # If true, train behavioral policy
+parser.add_argument("--generate_buffer", action="store_true")  # If true, generate buffer
+args = parser.parse_args()
+
+
+ex = Experiment("BCQ_SC")
+ex.captured_out_filter = apply_backspaces_and_linefeeds
+results_path = os.path.join(dirname(abspath(__file__)), "results")
+file_obs_path = os.path.join(results_path, "sacred")
+ex.observers.append(FileStorageObserver.create(file_obs_path))
+
+@ex.main
+def my_main():
 	# Atari Specific
 	atari_preprocessing = {
 		"frame_skip": 4,
@@ -240,19 +267,6 @@ if __name__ == "__main__":
 		"target_update_freq": 1,
 		"tau": 0.005
 	}
-
-	# Load parameters
-	parser = argparse.ArgumentParser()
-	parser.add_argument("--env", default="PongNoFrameskip-v0")     # OpenAI gym environment name
-	parser.add_argument("--seed", default=0, type=int)             # Sets Gym, PyTorch and Numpy seeds
-	parser.add_argument("--buffer_name", default="Default")        # Prepends name to filename
-	parser.add_argument("--max_timesteps", default=1e6, type=int)  # Max time steps to run environment or train for
-	parser.add_argument("--BCQ_threshold", default=0.3, type=float)# Threshold hyper-parameter for BCQ
-	parser.add_argument("--low_noise_p", default=0.2, type=float)  # Probability of a low noise episode when generating buffer
-	parser.add_argument("--rand_action_p", default=0.2, type=float)# Probability of taking a random action when generating buffer, during non-low noise episode
-	parser.add_argument("--train_behavioral", action="store_true") # If true, train behavioral policy
-	parser.add_argument("--generate_buffer", action="store_true")  # If true, generate buffer
-	args = parser.parse_args()
 	
 	print("---------------------------------------")	
 	if args.train_behavioral:
@@ -295,3 +309,6 @@ if __name__ == "__main__":
 		interact_with_environment(env, replay_buffer, is_atari, num_actions, state_dim, device, args, parameters)
 	else:
 		train_BCQ(env, replay_buffer, is_atari, num_actions, state_dim, device, args, parameters)
+
+if __name__ == "__main__":
+	ex.run()
