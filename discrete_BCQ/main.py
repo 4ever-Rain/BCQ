@@ -188,7 +188,61 @@ def eval_policy(policy, env_name, seed, eval_episodes=10):
 
 
 
+atari_preprocessing = {
+	"frame_skip": 4,
+	"frame_size": 84,
+	"state_history": 4,
+	"done_on_life_loss": False,
+	"reward_clipping": True,
+	"max_episode_timesteps": 27e3
+}
 
+atari_parameters = {
+	# Exploration
+	"start_timesteps": 2e4,
+	"initial_eps": 1,
+	"end_eps": 1e-2,
+	"eps_decay_period": 25e4,
+	# Evaluation
+	"eval_freq": 5e4,
+	"eval_eps": 1e-3,
+	# Learning
+	"discount": 0.99,
+	"buffer_size": 1e6,
+	"batch_size": 32,
+	"optimizer": "Adam",
+	"optimizer_parameters": {
+		"lr": 0.0000625,
+		"eps": 0.00015
+	},
+	"train_freq": 4,
+	"polyak_target_update": False,
+	"target_update_freq": 8e3,
+	"tau": 1
+}
+
+regular_parameters = {
+	# Exploration
+	"start_timesteps": 1e3,
+	"initial_eps": 0.1,
+	"end_eps": 0.1,
+	"eps_decay_period": 1,
+	# Evaluation
+	"eval_freq": 5e3,
+	"eval_eps": 0,
+	# Learning
+	"discount": 0.99,
+	"buffer_size": 1e6,
+	"batch_size": 64,
+	"optimizer": "Adam",
+	"optimizer_parameters": {
+		"lr": 3e-4
+	},
+	"train_freq": 1,
+	"polyak_target_update": True,
+	"target_update_freq": 1,
+	"tau": 0.005
+}
 # Load parameters
 parser = argparse.ArgumentParser()
 parser.add_argument("--env", default="PongNoFrameskip-v0")     # OpenAI gym environment name
@@ -212,61 +266,7 @@ ex.observers.append(FileStorageObserver.create(file_obs_path))
 @ex.main
 def my_main():
 	# Atari Specific
-	atari_preprocessing = {
-		"frame_skip": 4,
-		"frame_size": 84,
-		"state_history": 4,
-		"done_on_life_loss": False,
-		"reward_clipping": True,
-		"max_episode_timesteps": 27e3
-	}
-
-	atari_parameters = {
-		# Exploration
-		"start_timesteps": 2e4,
-		"initial_eps": 1,
-		"end_eps": 1e-2,
-		"eps_decay_period": 25e4,
-		# Evaluation
-		"eval_freq": 5e4,
-		"eval_eps": 1e-3,
-		# Learning
-		"discount": 0.99,
-		"buffer_size": 1e6,
-		"batch_size": 32,
-		"optimizer": "Adam",
-		"optimizer_parameters": {
-			"lr": 0.0000625,
-			"eps": 0.00015
-		},
-		"train_freq": 4,
-		"polyak_target_update": False,
-		"target_update_freq": 8e3,
-		"tau": 1
-	}
-
-	regular_parameters = {
-		# Exploration
-		"start_timesteps": 1e3,
-		"initial_eps": 0.1,
-		"end_eps": 0.1,
-		"eps_decay_period": 1,
-		# Evaluation
-		"eval_freq": 5e3,
-		"eval_eps": 0,
-		# Learning
-		"discount": 0.99,
-		"buffer_size": 1e6,
-		"batch_size": 64,
-		"optimizer": "Adam",
-		"optimizer_parameters": {
-			"lr": 3e-4
-		},
-		"train_freq": 1,
-		"polyak_target_update": True,
-		"target_update_freq": 1,
-		"tau": 0.005
-	}
+	
 	
 	print("---------------------------------------")	
 	if args.train_behavioral:
