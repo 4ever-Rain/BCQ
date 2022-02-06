@@ -146,7 +146,7 @@ def train_BCQ(env, replay_buffer, is_atari, num_actions, state_dim, device, args
 	)
 
 	# Load replay buffer	
-	replay_buffer.load(f"./buffers/{buffer_name}")
+	replay_buffer.load(f"./buffers/{buffer_name}", args.buffer_load)
 	
 	evaluations = []
 	episode_num = 0
@@ -159,7 +159,7 @@ def train_BCQ(env, replay_buffer, is_atari, num_actions, state_dim, device, args
 			policy.train(replay_buffer)
 
 		evaluations.append(eval_policy(policy, args.env, args.seed))
-		np.save(f"./results/BCQ_{setting}", evaluations)
+		np.save(f"./results/BCQ_{setting}_{args.buffer_load}", evaluations)
 
 		training_iters += int(parameters["eval_freq"])
 		print(f"Training iterations: {training_iters}")
@@ -248,6 +248,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--env", default="PongNoFrameskip-v0")     # OpenAI gym environment name
 parser.add_argument("--seed", default=0, type=int)             # Sets Gym, PyTorch and Numpy seeds
 parser.add_argument("--buffer_name", default="Default")        # Prepends name to filename
+parser.add_argument("--buffer_load", default=-1, type=float)   # How much buffer to load, when -1 load total data
 parser.add_argument("--max_timesteps", default=1e6, type=int)  # Max time steps to run environment or train for
 parser.add_argument("--BCQ_threshold", default=0.3, type=float)# Threshold hyper-parameter for BCQ
 parser.add_argument("--low_noise_p", default=0.2, type=float)  # Probability of a low noise episode when generating buffer
@@ -275,6 +276,24 @@ def my_main():
 		print(f"Setting: Generating buffer, Env: {args.env}, Seed: {args.seed}")
 	else:
 		print(f"Setting: Training BCQ, Env: {args.env}, Seed: {args.seed}")
+	print("---------------------------------------")
+
+
+	print("---------------config------------------")
+	cfg = vars(args)
+	for key, value in cfg.items():
+		print("{key} : {value}".format(key=key, value=value))
+	
+	print("atari_preprocessing")
+	for key, value in atari_preprocessing.items():
+		print("{key} : {value}".format(key=key, value=value))
+	print("atari_parameters")
+	for key, value in atari_parameters.items():
+		print("{key} : {value}".format(key=key, value=value))
+	print("regular_parameters")
+	for key, value in regular_parameters.items():
+		print("{key} : {value}".format(key=key, value=value))
+	print("buffer_load:", args.buffer_load)
 	print("---------------------------------------")
 
 	if args.train_behavioral and args.generate_buffer:
