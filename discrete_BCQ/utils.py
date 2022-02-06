@@ -123,11 +123,11 @@ class AtariBuffer(object):
 		self.ptr, chunk = np.load(f"{save_folder}_replay_info.npy")
 
 		crt = 0
-		end = min(chunk, self.crt_size + 1)
-		while crt < self.crt_size + 1:
+		end = min(chunk, self.crt_size)
+		while crt < self.crt_size:
 			self.state[crt:end] = np.load(f"{save_folder}_state_{end}.npy")
 			crt = end
-			end = min(end + chunk, self.crt_size + 1)
+			end = min(end + chunk, self.crt_size)
 
 
 # Generic replay buffer for standard gym tasks
